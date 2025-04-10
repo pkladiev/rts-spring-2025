@@ -1,16 +1,21 @@
 constexpr uint8_t INTERRUPT_PIN = 3;
 constexpr size_t SAMPLE_SIZE = 100;
+constexpr size_t SKIP_COUNT = 2;
 
+volatile size_t interrupt_count = 0;
 volatile size_t sample_count = 0;
 volatile uint32_t sum_of_measurements = 0;
 uint32_t measurements[SAMPLE_SIZE];
 volatile uint32_t previous_time = 0;
 
+
 void handleInterrupt() {
     uint32_t current_time = micros();
     uint32_t time_difference = current_time - previous_time;
     
-    if (sample_count < SAMPLE_SIZE) {
+    interrupt_count++;
+    
+    if (interrupt_count > SKIP_COUNT && sample_count < SAMPLE_SIZE) {
         measurements[sample_count] = time_difference;
         sum_of_measurements += time_difference;
         sample_count++;
@@ -48,8 +53,8 @@ void loop() {
         noInterrupts();
         processMeasurements();
         sample_count = 0;
+        interrupt_count = 0;
         sum_of_measurements = 0;
         interrupts();
     }
 }
-
